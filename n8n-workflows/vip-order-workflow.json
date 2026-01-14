@@ -1,0 +1,399 @@
+{
+  "name": "VIP Order Processing - Composio Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vip-order",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Composio Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "warehouse_a_api",
+              "value": "https://api.warehouse-a.com/inventory"
+            },
+            {
+              "name": "warehouse_b_api",
+              "value": "https://api.warehouse-b.com/inventory"
+            },
+            {
+              "name": "tax_api",
+              "value": "https://api.taxcalc.com/calculate"
+            },
+            {
+              "name": "pdf_api",
+              "value": "https://api.pdfgen.com/invoice"
+            },
+            {
+              "name": "crm_api",
+              "value": "https://api.crm-system.com/orders"
+            },
+            {
+              "name": "erp_api",
+              "value": "https://api.erp-system.com/orders"
+            },
+            {
+              "name": "notification_api",
+              "value": "https://api.notifications.com/send"
+            }
+          ]
+        }
+      },
+      "id": "workflow-config",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const orderData = items[0].json.body;\n\nreturn [\n  {\n    json: {\n      orderId: orderData.orderId,\n      customerId: orderData.customerId,\n      customerEmail: orderData.customerEmail,\n      isVIP: orderData.isVIP,\n      items: orderData.items,\n      shippingAddress: orderData.shippingAddress,\n      totalAmount: orderData.totalAmount\n    }\n  }\n];"
+      },
+      "id": "parse-order",
+      "name": "Parse Order Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node[\"Workflow Configuration\"].json[\"warehouse_a_api\"] }}",
+        "authentication": "genericCredentialType",
+        "options": {
+          "timeout": 10000
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "items",
+              "value": "={{ $json.items }}"
+            }
+          ]
+        }
+      },
+      "id": "check-warehouse-a",
+      "name": "Check Inventory - Warehouse A",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node[\"Workflow Configuration\"].json[\"warehouse_b_api\"] }}",
+        "authentication": "genericCredentialType",
+        "options": {
+          "timeout": 10000
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "items",
+              "value": "={{ $json.items }}"
+            }
+          ]
+        }
+      },
+      "id": "check-warehouse-b",
+      "name": "Check Inventory - Warehouse B",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "orderId",
+              "field2": "orderId"
+            }
+          ]
+        }
+      },
+      "id": "combine-inventory",
+      "name": "Combine Inventory Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const warehouseA = items[0].json.warehouseA;\nconst warehouseB = items[0].json.warehouseB;\nconst orderItems = items[0].json.items;\n\nfunction calculateScore(warehouse) {\n  let score = 0;\n  score += warehouse.availability ? 100 : 0;\n  score -= warehouse.shippingTime * 5;\n  score -= warehouse.shippingCost * 0.1;\n  score += warehouse.stockLevel * 2;\n  return score;\n}\n\nconst scoreA = calculateScore(warehouseA);\nconst scoreB = calculateScore(warehouseB);\n\nconst bestWarehouse = scoreA >= scoreB ? 'A' : 'B';\nconst selectedWarehouse = scoreA >= scoreB ? warehouseA : warehouseB;\n\nreturn [\n  {\n    json: {\n      ...items[0].json,\n      selectedWarehouse: bestWarehouse,\n      warehouseData: selectedWarehouse,\n      stockAvailable: selectedWarehouse.availability\n    }\n  }\n];"
+      },
+      "id": "determine-warehouse",
+      "name": "Determine Best Warehouse",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.stockAvailable }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "check-stock",
+      "name": "Check Stock Availability",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node[\"Workflow Configuration\"].json[\"tax_api\"] }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "amount",
+              "value": "={{ $json.totalAmount }}"
+            },
+            {
+              "name": "address",
+              "value": "={{ $json.shippingAddress }}"
+            }
+          ]
+        }
+      },
+      "id": "calculate-tax",
+      "name": "Calculate Tax",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1650, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const order = items[0].json;\nconst taxData = items[0].json.tax;\n\nconst vipDiscount = order.isVIP ? order.totalAmount * 0.1 : 0;\nconst subtotal = order.totalAmount - vipDiscount;\nconst taxAmount = taxData.taxAmount;\nconst total = subtotal + taxAmount;\n\nreturn [\n  {\n    json: {\n      ...order,\n      invoiceData: {\n        orderId: order.orderId,\n        customerId: order.customerId,\n        items: order.items,\n        subtotal: order.totalAmount,\n        vipDiscount: vipDiscount,\n        discountedSubtotal: subtotal,\n        taxRate: taxData.taxRate,\n        taxAmount: taxAmount,\n        total: total,\n        warehouse: order.selectedWarehouse,\n        invoiceDate: new Date().toISOString()\n      }\n    }\n  }\n];"
+      },
+      "id": "prepare-invoice",
+      "name": "Prepare Invoice Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1850, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node[\"Workflow Configuration\"].json[\"pdf_api\"] }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "invoiceData",
+              "value": "={{ $json.invoiceData }}"
+            }
+          ]
+        }
+      },
+      "id": "generate-pdf",
+      "name": "Generate PDF Invoice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2050, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node[\"Workflow Configuration\"].json[\"crm_api\"] }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "orderId",
+              "value": "={{ $json.orderId }}"
+            },
+            {
+              "name": "customerId",
+              "value": "={{ $json.customerId }}"
+            },
+            {
+              "name": "invoiceUrl",
+              "value": "={{ $json.pdfUrl }}"
+            },
+            {
+              "name": "status",
+              "value": "processed"
+            }
+          ]
+        }
+      },
+      "id": "update-crm",
+      "name": "Update CRM System",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2250, 100]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node[\"Workflow Configuration\"].json[\"erp_api\"] }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "orderId",
+              "value": "={{ $json.orderId }}"
+            },
+            {
+              "name": "warehouse",
+              "value": "={{ $json.selectedWarehouse }}"
+            },
+            {
+              "name": "invoiceData",
+              "value": "={{ $json.invoiceData }}"
+            }
+          ]
+        }
+      },
+      "id": "update-erp",
+      "name": "Update ERP System",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $node[\"Workflow Configuration\"].json[\"notification_api\"] }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $json.customerEmail }}"
+            },
+            {
+              "name": "orderId",
+              "value": "={{ $json.orderId }}"
+            },
+            {
+              "name": "message",
+              "value": "Your VIP order has been processed successfully!"
+            },
+            {
+              "name": "invoiceUrl",
+              "value": "={{ $json.pdfUrl }}"
+            }
+          ]
+        }
+      },
+      "id": "send-notification",
+      "name": "Send Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [2450, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      success: true,\n      orderId: items[0].json.orderId,\n      message: \"VIP order processed successfully\",\n      warehouse: items[0].json.selectedWarehouse,\n      invoiceUrl: items[0].json.pdfUrl,\n      total: items[0].json.invoiceData.total\n    }\n  }\n];"
+      },
+      "id": "format-success",
+      "name": "Format Success Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [2650, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      success: false,\n      orderId: items[0].json.orderId,\n      message: \"Order cannot be fulfilled - Out of stock\",\n      error: \"STOCK_UNAVAILABLE\"\n    }\n  }\n];"
+      },
+      "id": "format-out-of-stock",
+      "name": "Format Out of Stock Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1650, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-webhook",
+      "name": "Return Response to Composio",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2850, 300]
+    }
+  ],
+  "connections": {
+    "Composio Webhook Trigger": {
+      "main": [[{ "node": "Workflow Configuration", "type": "main", "index": 0 }]]
+    },
+    "Workflow Configuration": {
+      "main": [[{ "node": "Parse Order Data", "type": "main", "index": 0 }]]
+    },
+    "Parse Order Data": {
+      "main": [
+        [
+          { "node": "Check Inventory - Warehouse A", "type": "main", "index": 0 },
+          { "node": "Check Inventory - Warehouse B", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Check Inventory - Warehouse A": {
+      "main": [[{ "node": "Combine Inventory Results", "type": "main", "index": 0 }]]
+    },
+    "Check Inventory - Warehouse B": {
+      "main": [[{ "node": "Combine Inventory Results", "type": "main", "index": 1 }]]
+    },
+    "Combine Inventory Results": {
+      "main": [[{ "node": "Determine Best Warehouse", "type": "main", "index": 0 }]]
+    },
+    "Determine Best Warehouse": {
+      "main": [[{ "node": "Check Stock Availability", "type": "main", "index": 0 }]]
+    },
+    "Check Stock Availability": {
+      "main": [
+        [{ "node": "Calculate Tax", "type": "main", "index": 0 }],
+        [{ "node": "Format Out of Stock Response", "type": "main", "index": 0 }]
+      ]
+    },
+    "Calculate Tax": {
+      "main": [[{ "node": "Prepare Invoice Data", "type": "main", "index": 0 }]]
+    },
+    "Prepare Invoice Data": {
+      "main": [[{ "node": "Generate PDF Invoice", "type": "main", "index": 0 }]]
+    },
+    "Generate PDF Invoice": {
+      "main": [
+        [
+          { "node": "Update CRM System", "type": "main", "index": 0 },
+          { "node": "Update ERP System", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Update CRM System": {
+      "main": [[{ "node": "Send Notification", "type": "main", "index": 0 }]]
+    },
+    "Update ERP System": {
+      "main": [[{ "node": "Send Notification", "type": "main", "index": 0 }]]
+    },
+    "Send Notification": {
+      "main": [[{ "node": "Format Success Response", "type": "main", "index": 0 }]]
+    },
+    "Format Success Response": {
+      "main": [[{ "node": "Return Response to Composio", "type": "main", "index": 0 }]]
+    },
+    "Format Out of Stock Response": {
+      "main": [[{ "node": "Return Response to Composio", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1.0"
+}
+

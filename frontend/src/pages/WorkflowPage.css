@@ -1,0 +1,245 @@
+.workflow-page {
+  min-height: 100vh;
+  background: var(--bg-gray);
+}
+
+/* Header */
+.workflow-header {
+  background: white;
+  padding: 30px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.workflow-header h1 {
+  font-size: 32px;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.workflow-header p {
+  color: var(--text-light);
+  font-size: 16px;
+}
+
+/* Workflow Status */
+.workflow-status-section {
+  padding: 40px 0;
+}
+
+.status-card {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.status-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 24px;
+}
+
+.status-item {
+  text-align: center;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.status-label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+
+.status-value {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.status-value.success {
+  color: #10b981;
+}
+
+.status-value.error {
+  color: #ef4444;
+}
+
+/* Workflow Steps */
+.workflow-steps-section {
+  padding: 40px 0;
+}
+
+.section-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 40px;
+  color: var(--text-dark);
+  text-align: center;
+}
+
+.workflow-flow {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.flow-step {
+  position: relative;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.flow-step:hover {
+  transform: translateX(8px);
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.step-icon {
+  font-size: 40px;
+  flex-shrink: 0;
+}
+
+.step-info h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.step-info p {
+  font-size: 14px;
+  color: var(--text-light);
+}
+
+.step-number {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: var(--bg-gray);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.flow-arrow {
+  text-align: center;
+  font-size: 32px;
+  color: var(--primary-color);
+  margin: 10px 0;
+}
+
+/* Integrations */
+.integrations-section {
+  padding: 40px 0;
+  background: white;
+}
+
+.integrations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.integration-card {
+  text-align: center;
+}
+
+.integration-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.integration-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-dark);
+}
+
+.integration-card p {
+  font-size: 14px;
+  color: var(--text-light);
+  margin-bottom: 16px;
+}
+
+/* Benefits */
+.benefits-section {
+  padding: 40px 0 80px;
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+}
+
+.benefit-card {
+  text-align: center;
+  padding: 32px 24px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.benefit-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.benefit-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.benefit-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text-dark);
+}
+
+.benefit-card p {
+  font-size: 14px;
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .status-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .flow-step:hover {
+    transform: none;
+  }
+
+  .step-number {
+    position: static;
+    display: inline-block;
+    margin-top: 12px;
+  }
+}
+
