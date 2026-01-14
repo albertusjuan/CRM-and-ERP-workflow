@@ -288,7 +288,6 @@ Once everything is running:
 2. **Process Orders**: Try creating test orders
 3. **Customize Workflow**: Modify the n8n workflow to fit your needs
 4. **Integration**: Replace mock APIs with real services
-5. **Deploy**: See DEPLOYMENT.md for production deployment guide
 
 ## Getting Help
 

@@ -233,13 +233,11 @@ git init
 git add .
 git commit -m "Initial commit: Composio + n8n MVP"
 git branch -M main
-git remote add origin https://github.com/yourusername/composio-n8n-mvp.git
+git remote add origin https://github.com/albertusjuan/CRM-and-ERP-workflow.git
 git push -u origin main
 ```
 
-### To Hostinger VPS
-
-See `docs/DEPLOYMENT.md` for detailed deployment instructions.
+**Repository**: [https://github.com/albertusjuan/CRM-and-ERP-workflow](https://github.com/albertusjuan/CRM-and-ERP-workflow)
 
 ## 📚 Documentation
 
