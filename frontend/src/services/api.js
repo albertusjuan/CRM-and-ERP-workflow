@@ -45,6 +45,31 @@ export const healthCheck = () => {
   return api.get('/health');
 };
 
+// Configuration
+export const getConfigStatus = () => {
+  return api.get('/api/config/status');
+};
+
+export const getConfig = () => {
+  return api.get('/api/config');
+};
+
+export const updateConfig = (configData) => {
+  return api.post('/api/config', configData);
+};
+
+export const testN8nConnection = (webhookUrl) => {
+  return api.post('/api/config/test/n8n', { webhookUrl });
+};
+
+export const testComposioConnection = (apiKey) => {
+  return api.post('/api/config/test/composio', { apiKey });
+};
+
+export const resetConfig = () => {
+  return api.post('/api/config/reset');
+};
+
 export default {
   processOrder,
   getOrderStatus,
@@ -54,5 +79,11 @@ export default {
   getWorkflowStatus,
   getWorkflowStats,
   healthCheck,
+  getConfigStatus,
+  getConfig,
+  updateConfig,
+  testN8nConnection,
+  testComposioConnection,
+  resetConfig,
 };
 

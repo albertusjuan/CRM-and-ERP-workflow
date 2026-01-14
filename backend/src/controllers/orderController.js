@@ -26,50 +26,50 @@ exports.processOrder = async (req, res) => {
     // Store order
     orders.set(orderId, enrichedOrder);
 
-    // Check if demo mode
-    if (process.env.DEMO_MODE === 'true') {
-      // Simulate processing delay
-      setTimeout(() => {
-        const mockResult = {
-          success: true,
-          orderId,
-          message: 'VIP order processed successfully (Demo Mode)',
-          warehouse: 'A',
-          invoiceUrl: `https://demo.wyntech.com/invoices/${orderId}.pdf`,
-          total: orderData.totalAmount * 1.1, // Including tax
-          processingTime: '2.3s'
-        };
-        
-        orders.set(orderId, {
-          ...enrichedOrder,
-          status: 'completed',
-          result: mockResult
-        });
-      }, 2000);
+    // Check if system is configured
+    const configController = require('../controllers/configController');
+    const config = configController.getSystemConfig();
 
-      return res.json({
-        success: true,
-        orderId,
-        message: 'Order submitted for processing (Demo Mode)',
-        status: 'processing'
+    if (!config.isConfigured) {
+      return res.status(503).json({
+        success: false,
+        error: 'SYSTEM_NOT_CONFIGURED',
+        message: 'System is not configured. Please configure n8n and Composio API keys in settings.',
+        orderId
       });
     }
 
     // Send to n8n workflow
     const result = await n8nService.triggerWorkflow(enrichedOrder);
     
+    if (!result.success) {
+      orders.set(orderId, {
+        ...enrichedOrder,
+        status: 'failed',
+        result,
+        error: result.error
+      });
+
+      return res.status(500).json({
+        success: false,
+        orderId,
+        message: result.message || 'Failed to process order',
+        error: result.error
+      });
+    }
+
     // Update order with result
     orders.set(orderId, {
       ...enrichedOrder,
-      status: result.success ? 'completed' : 'failed',
-      result
+      status: 'completed',
+      result: result.data
     });
 
     res.json({
       success: true,
       orderId,
       message: 'Order submitted for processing',
-      workflowResult: result
+      workflowResult: result.data
     });
 
   } catch (error) {

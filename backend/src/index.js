@@ -18,11 +18,13 @@ const orderRoutes = require('./routes/orderRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const workflowRoutes = require('./routes/workflowRoutes');
 const webhookRoutes = require('./routes/webhookRoutes');
+const configRoutes = require('./routes/configRoutes');
 
 app.use('/api/orders', orderRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/workflow', workflowRoutes);
 app.use('/api/webhook', webhookRoutes);
+app.use('/api/config', configRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

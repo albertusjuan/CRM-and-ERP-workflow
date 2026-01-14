@@ -1,30 +1,44 @@
 const axios = require('axios');
+const configController = require('../controllers/configController');
 
 /**
  * Trigger n8n workflow
  */
 exports.triggerWorkflow = async (orderData) => {
   try {
-    const webhookUrl = process.env.N8N_WEBHOOK_URL;
+    // Get system configuration
+    const config = configController.getSystemConfig();
     
-    if (!webhookUrl) {
-      throw new Error('N8N_WEBHOOK_URL not configured');
+    // Check if system is configured
+    if (!config.isConfigured || !config.n8n.webhookUrl) {
+      return {
+        success: false,
+        error: 'System not configured',
+        message: 'Please configure n8n webhook URL in the settings'
+      };
     }
 
-    const response = await axios.post(webhookUrl, orderData, {
+    const response = await axios.post(config.n8n.webhookUrl, orderData, {
       headers: {
         'Content-Type': 'application/json',
-        ...(process.env.N8N_API_KEY && {
-          'Authorization': `Bearer ${process.env.N8N_API_KEY}`
+        ...(config.n8n.apiKey && {
+          'Authorization': `Bearer ${config.n8n.apiKey}`
         })
       },
       timeout: 30000
     });
 
-    return response.data;
+    return {
+      success: true,
+      data: response.data
+    };
   } catch (error) {
     console.error('n8n service error:', error.message);
-    throw error;
+    return {
+      success: false,
+      error: error.message,
+      details: error.response?.data
+    };
   }
 };
 
@@ -33,16 +47,15 @@ exports.triggerWorkflow = async (orderData) => {
  */
 exports.getExecutionStatus = async (executionId) => {
   try {
-    const baseUrl = process.env.N8N_BASE_URL;
-    const apiKey = process.env.N8N_API_KEY;
+    const config = configController.getSystemConfig();
     
-    if (!baseUrl || !apiKey) {
+    if (!config.isConfigured || !config.n8n.baseUrl) {
       throw new Error('N8N configuration not complete');
     }
 
-    const response = await axios.get(`${baseUrl}/api/v1/executions/${executionId}`, {
+    const response = await axios.get(`${config.n8n.baseUrl}/api/v1/executions/${executionId}`, {
       headers: {
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${config.n8n.apiKey}`
       }
     });
 
