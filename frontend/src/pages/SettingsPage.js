@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './SettingsPage.css';
-import api from '../services/api';
+import api from '../services'; // Auto-loads correct API based on mode
 
 function SettingsPage() {
   const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './WorkflowPage.css';
-import api from '../services/api';
+import api from '../services'; // Auto-loads correct API based on mode
 
 function WorkflowPage() {
   const navigate = useNavigate();
